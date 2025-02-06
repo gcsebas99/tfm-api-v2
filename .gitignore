@@ -1,3 +1,7 @@
 *.db
 venv/
 uploads/
+__pycache__/
+instance/
+*.pyc
+*.log
