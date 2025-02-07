@@ -8,7 +8,7 @@ class Event(db.Model):
     created = db.Column(db.DateTime, default=datetime.utcnow)
     updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     commercial_id = db.Column(db.Integer, nullable=False)
-    status = db.Column(db.String(10), default='initialized', nullable=False)
+    status = db.Column(db.String(20), default='initialized', nullable=False)
     country_name = db.Column(db.String(128), nullable=True)
     country_code = db.Column(db.String(10), nullable=True)
 
