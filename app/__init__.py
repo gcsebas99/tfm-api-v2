@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 api = Api(app)
-CORS(app)
+CORS(app, origins=["https://tfm-front-d58c83913652.herokuapp.com"])
 
 from app.models import Event
 from app.models import EventRecognition
