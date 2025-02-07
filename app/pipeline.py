@@ -41,10 +41,11 @@ def process_image_yolo(image_file, second):
             # draw.rectangle([(x_min, y_min), (x_max, y_max)], outline="red", width=3)
 
             # Save the cropped face
-            face_filename = f"face_yolo_{i}_{second}.jpg"
-            face_path = os.path.join(UPLOAD_FOLDER, face_filename)
-            face_crop.save(face_path)
-            app.logger.info(f"Saved cropped face as {face_filename}")
+            # face_filename = f"face_yolo_{i}_{second}.jpg"
+            # face_path = os.path.join(UPLOAD_FOLDER, face_filename)
+            # face_crop.save(face_path)
+            # app.logger.info(f"Saved cropped face as {face_filename}")
+            app.logger.info(f"Face recognized in second {second} in rect [{x_min}, {y_min}, {x_max}, {y_max}]")
 
 
     # Save processed image to a BytesIO buffer
