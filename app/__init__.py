@@ -8,7 +8,7 @@ from config import get_config
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
-from app.pipeline import process_image_yolo, fake_pipeline
+from app.pipeline import process_image_yolo, fake_pipeline, process_image_mediapipe
 import requests
 import logging
 # import os
@@ -24,6 +24,7 @@ logging.basicConfig(level=logging.INFO)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 api = Api(app)
+# CORS(app)
 CORS(app, origins=["https://tfm-front-d58c83913652.herokuapp.com"])
 
 from app.models import Event
@@ -243,6 +244,8 @@ class RecognitionApi(Resource):
             second = request.form.get("second")
             image = request.files.get('image')
 
+            app.logger.info(f"Event value: {event_id} Second value: {second}")
+
             if event_id is None or second is None:
                 return {"error": "event_id and second are required"}, 400
 
@@ -274,7 +277,8 @@ class RecognitionApi(Resource):
 
             # Process the image: detect face, age, gender and facial expressions
             # image_data = process_image_yolo(image, second)
-            image_data = fake_pipeline(image, second)
+            # image_data = fake_pipeline(image, second)
+            image_data = process_image_mediapipe(image, second)
 
             # Create a new EventRecognition object
             recognition = EventRecognition(
