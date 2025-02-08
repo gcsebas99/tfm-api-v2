@@ -72,3 +72,18 @@ def process_image_yolo(image_file, second):
         "percent_disgust": 1.0,
         "percent_contempt": 1.0
     }
+
+def fake_pipeline(image_file, second):
+    return {
+        "face": True,
+        "age": 25,
+        "gender": 2,  # 1 for Female, 2 for Male
+        "percent_neutral": 40.0,
+        "percent_happy": 35.0,
+        "percent_angry": 5.0,
+        "percent_sad": 10.0,
+        "percent_fear": 2.0,
+        "percent_surprise": 6.0,
+        "percent_disgust": 1.0,
+        "percent_contempt": 1.0
+    }

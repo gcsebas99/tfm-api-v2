@@ -8,7 +8,7 @@ from config import get_config
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
-from app.pipeline import process_image_yolo
+from app.pipeline import process_image_yolo, fake_pipeline
 import requests
 import logging
 # import os
@@ -273,7 +273,8 @@ class RecognitionApi(Resource):
                 return {'error': 'Event not found'}, 404
 
             # Process the image: detect face, age, gender and facial expressions
-            image_data = process_image_yolo(image, second)
+            # image_data = process_image_yolo(image, second)
+            image_data = fake_pipeline(image, second)
 
             # Create a new EventRecognition object
             recognition = EventRecognition(
