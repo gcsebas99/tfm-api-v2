@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 import mediapipe as mp
 
+from memory_profiler import profile
 
 
 
@@ -82,26 +83,12 @@ def process_image_yolo(image_file, second):
         "percent_contempt": 1.0
     }
 
-def fake_pipeline(image_file, second):
-    return {
-        "face": True,
-        "age": 25,
-        "gender": 2,  # 1 for Female, 2 for Male
-        "percent_neutral": 40.0,
-        "percent_happy": 35.0,
-        "percent_angry": 5.0,
-        "percent_sad": 10.0,
-        "percent_fear": 2.0,
-        "percent_surprise": 6.0,
-        "percent_disgust": 1.0,
-        "percent_contempt": 1.0
-    }
-
 
 # Initialize Mediapipe Face Detection
 mp_face_detection = mp.solutions.face_detection
 face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
 
+# @profile
 def process_image_mediapipe(image_file, second):
     try:
         # Read image
@@ -155,6 +142,7 @@ def process_image_mediapipe(image_file, second):
         print(f"❌ Error processing image: {str(e)}")
         return None
 
+    # pass
     return {
         "face": True,
         "age": 25,
@@ -162,9 +150,29 @@ def process_image_mediapipe(image_file, second):
         "percent_neutral": 40.0,
         "percent_happy": 35.0,
         "percent_angry": 5.0,
-        "percent_sad": 10.0,
+        "percent_sad": 10.6,
         "percent_fear": 2.0,
         "percent_surprise": 6.0,
         "percent_disgust": 1.0,
-        "percent_contempt": 1.0
+        "percent_contempt": 1.9
     }
+
+def process_image_random():
+    emotions = ["percent_neutral", "percent_happy", "percent_angry", "percent_sad",
+                "percent_fear", "percent_surprise", "percent_disgust", "percent_contempt"]
+
+    # Generate random values
+    random_values = np.random.dirichlet(np.ones(len(emotions))) * 100
+
+    # Create response dictionary
+    resran = {
+        "face": True,
+        "age": int(25),
+        "gender": int(np.random.choice([1, 2])),  # Randomize gender
+    }
+
+    # Assign randomized values
+    for emotion, value in zip(emotions, random_values):
+        resran[emotion] = float(round(value, 1))   # Round to 1 decimal place
+
+    return resran

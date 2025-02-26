@@ -8,10 +8,17 @@ from config import get_config
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
-from app.pipeline import process_image_yolo, fake_pipeline, process_image_mediapipe
+from app.pipeline import process_image_yolo, process_image_mediapipe, process_image_random
 import requests
 import logging
-# import os
+import numpy as np
+import psutil
+import os
+import random
+
+def get_memory_usage():
+    process = psutil.Process(os.getpid())
+    return process.memory_info().rss / (1024 * 1024)  # Convert to MB
 
 # Define a permanent folder to store images
 # UPLOAD_FOLDER = "uploads"  # Change this to your preferred directory
@@ -24,8 +31,8 @@ logging.basicConfig(level=logging.INFO)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 api = Api(app)
-# CORS(app)
-CORS(app, origins=["https://tfm-front-d58c83913652.herokuapp.com"])
+CORS(app)
+# CORS(app, origins=["https://tfm-front-d58c83913652.herokuapp.com"])
 
 from app.models import Event
 from app.models import EventRecognition
@@ -101,28 +108,38 @@ class EventApi(Resource):
             if not isinstance(commercial_id, int):
                 return {'error': 'commercial_id must be an integer'}, 400
 
-            client_ip = get_client_ip()
 
-            # If running locally, avoid sending private/local IPs (e.g., 127.0.0.1)
-            if client_ip.startswith(('192.', '10.', '172.', '127.')):
-                #replace with fake ip from costa rica
-                client_ip = '201.207.176.114'
-                # return {'error': f'Cannot determine geolocation for private IPs [{client_ip}]'}, 400
 
-            external_api_url = f'https://reallyfreegeoip.org/json/{client_ip}'
+
+            # UNCOMMENT THIS
+
+            # client_ip = get_client_ip()
+
+            # # If running locally, avoid sending private/local IPs (e.g., 127.0.0.1)
+            # if client_ip.startswith(('192.', '10.', '172.', '127.')):
+            #     #replace with fake ip from costa rica
+            #     client_ip = '201.207.176.114'
+            #     # return {'error': f'Cannot determine geolocation for private IPs [{client_ip}]'}, 400
+
+            # external_api_url = f'https://reallyfreegeoip.org/json/{client_ip}'
+
+            # country_name = 'Unknown'
+            # country_code = 'XX'
+
+            # try:
+            #     response = requests.get(external_api_url)
+            #     response.raise_for_status()
+            #     country_info = response.json()
+            #     country_name = country_info['country_name']
+            #     country_code = country_info['country_code']
+            # except requests.exceptions.RequestException as e:
+            #     country_name = 'Unknown'
+            #     country_code = 'XX'
+
 
             country_name = 'Unknown'
-            country_code = 'XX'
+            country_code = np.random.choice(['CR', 'MX', 'ES', 'PA', 'CA', 'IN', 'US', 'RU'])
 
-            try:
-                response = requests.get(external_api_url)
-                response.raise_for_status()
-                country_info = response.json()
-                country_name = country_info['country_name']
-                country_code = country_info['country_code']
-            except requests.exceptions.RequestException as e:
-                country_name = 'Unknown'
-                country_code = 'XX'
 
             # Create a new Event instance
             new_event = Event(commercial_id=commercial_id, country_code=country_code, country_name=country_name)
@@ -279,6 +296,7 @@ class RecognitionApi(Resource):
             # image_data = process_image_yolo(image, second)
             # image_data = fake_pipeline(image, second)
             image_data = process_image_mediapipe(image, second)
+            # image_data = process_image_random()
 
             # Create a new EventRecognition object
             recognition = EventRecognition(
@@ -324,7 +342,77 @@ class RecognitionApi(Resource):
         except Exception as e:
             return {'error': str(e)}, 500
 
+class RecognitionBatchApi(Resource):
+    def post(self):
+        try:
+            # Validate and parse input
+            event_id = request.form.get("event_id")
+            num_images = request.form.get("num_images")
+            images = request.files.getlist("images")
+
+            app.logger.info(f"Event value: {event_id}, Number of images: {num_images}")
+
+            if event_id is None or num_images is None:
+                return {"error": "event_id and num_images are required"}, 400
+
+            try:
+                event_id = int(event_id)  # Convert to int
+                num_images = int(num_images)  # Convert to int
+            except ValueError:
+                return {"error": "event_id and num_images must be integers"}, 400
+
+            if not images or len(images) != num_images:
+                return {'error': 'Number of uploaded images must match num_images'}, 400
+
+            # Validate event_id exists
+            event = Event.query.get(event_id)
+            if not event:
+                return {'error': 'Event not found'}, 404
+
+            print(f"Memory usage before processing: {get_memory_usage()} MB")
+            recognitions = []
+            age = random.randint(14, 70)
+            gender = random.randint(1, 2)
+
+            for second, image in enumerate(images):
+                if not image.content_type.startswith('image/'):
+                    return {'error': f'File at position {second} is not an image'}, 400
+
+                # Process the image
+                # image_data = process_image_random()
+                image_data = process_image_mediapipe(image, second)
+
+
+                # Create new recognition entry
+                recognition = EventRecognition(
+                    event_id=event_id,
+                    second=second,
+                    face=image_data['face'],
+                    age=age,
+                    gender=gender,
+                    percent_neutral=image_data['percent_neutral'],
+                    percent_happy=image_data['percent_happy'],
+                    percent_angry=image_data['percent_angry'],
+                    percent_sad=image_data['percent_sad'],
+                    percent_fear=image_data['percent_fear'],
+                    percent_surprise=image_data['percent_surprise'],
+                    percent_disgust=image_data['percent_disgust'],
+                    percent_contempt=image_data['percent_contempt']
+                )
+                db.session.add(recognition)
+                recognitions.append(recognition)
+
+            db.session.commit()
+            print(f"Memory usage after processing: {get_memory_usage()} MB")
+
+
+            return {'message': 'Batch processing successful', 'processed': len(recognitions)}, 201
+
+        except Exception as e:
+            return {'error': str(e)}, 500
+
 api.add_resource(Status,'/')
 api.add_resource(CommercialApi,'/commercial')
 api.add_resource(EventApi,'/event')
 api.add_resource(RecognitionApi,'/recognition')
+api.add_resource(RecognitionBatchApi, '/recognitionbatch')
