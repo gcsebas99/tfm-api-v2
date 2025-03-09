@@ -15,6 +15,7 @@ import numpy as np
 import psutil
 import os
 import random
+import mediapipe as mp
 
 def get_memory_usage():
     process = psutil.Process(os.getpid())
@@ -42,8 +43,8 @@ class Status(Resource):
      def get(self):
          try:
             return {'data': 'Api running'}
-         except(error):
-            return {'data': error}
+         except Exception as error:
+            return {'data': str(error)}
 
 class CommercialApi(Resource):
     def get(self):

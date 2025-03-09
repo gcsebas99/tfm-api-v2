@@ -6,7 +6,7 @@ import os
 from huggingface_hub import hf_hub_download
 from ultralytics import YOLO
 from supervision import Detections
-
+from emotion_model import process_emotions
 
 import cv2
 import numpy as np
@@ -114,6 +114,30 @@ def process_image_mediapipe(image_file, second):
                 width = int(bbox.width * img_width)
                 height = int(bbox.height * img_height)
 
+
+                # # Add padding
+                # padding = 20
+                # x1, y1 = max(x_min - padding, 0), max(y_min - padding, 0)
+                # x2, y2 = min(x_min + width + padding, img_width), min(y_min + height + padding, img_height)
+
+                # # Crop the face with padding
+                # face_crop = img[y1:y2, x1:x2]
+
+                # # Calculate padding needed if the crop hits image edges
+                # top_pad = abs(y_min - padding) if y_min - padding < 0 else 0
+                # bottom_pad = abs((y_min + height + padding) - img_height) if (y_min + height + padding) > img_height else 0
+                # left_pad = abs(x_min - padding) if x_min - padding < 0 else 0
+                # right_pad = abs((x_min + width + padding) - img_width) if (x_min + width + padding) > img_width else 0
+
+                # # Add white padding if necessary
+                # face_crop = cv2.copyMakeBorder(
+                #     face_crop,
+                #     top_pad, bottom_pad, left_pad, right_pad,
+                #     cv2.BORDER_CONSTANT,
+                #     value=[255, 255, 255]  # White color
+                # )
+
+
                 # Ensure coordinates are within bounds
                 x_max = min(x_min + width, img_width)
                 y_max = min(y_min + height, img_height)
@@ -121,10 +145,13 @@ def process_image_mediapipe(image_file, second):
                 # Crop the face
                 face_crop = img[y_min:y_max, x_min:x_max]
 
+                # Process emotions
+                result_emotions=process_emotions(face_crop)
+
                 # Save the cropped face
-                # face_filename = f"face_mediapipe_{i}_{second}.jpg"
-                # face_path = os.path.join(UPLOAD_FOLDER, face_filename)
-                # cv2.imwrite(face_path, face_crop)  # Correct method for saving OpenCV images
+                face_filename = f"face_mediapipe_{i}_{second}.jpg"
+                face_path = os.path.join(UPLOAD_FOLDER, face_filename)
+                cv2.imwrite(face_path, face_crop)  # Correct method for saving OpenCV images
 
                 # faces.append({
                 #     "xmin": x_min,
@@ -134,7 +161,7 @@ def process_image_mediapipe(image_file, second):
                 #     "score": detection.score[0]
                 # })
 
-                print(f"✅ Face recognized in second {second} at [{x_min}, {y_min}, {x_max}, {y_max}]")
+                print(f"✅ Face recognized in second {second}")
 
         # return faces
 
@@ -147,14 +174,14 @@ def process_image_mediapipe(image_file, second):
         "face": True,
         "age": 25,
         "gender": 2,  # 1 for Female, 2 for Male
-        "percent_neutral": 40.0,
-        "percent_happy": 35.0,
-        "percent_angry": 5.0,
-        "percent_sad": 10.6,
-        "percent_fear": 2.0,
-        "percent_surprise": 6.0,
-        "percent_disgust": 1.0,
-        "percent_contempt": 1.9
+        "percent_neutral": result_emotions["neutral"],
+        "percent_happy": result_emotions["happy"],
+        "percent_angry": result_emotions["angry"],
+        "percent_sad": result_emotions["sad"],
+        "percent_fear": result_emotions["fear"],
+        "percent_surprise": result_emotions["surprise"],
+        "percent_disgust": result_emotions["disgust"],
+        "percent_contempt": result_emotions["contempt"],
     }
 
 def process_image_random():
