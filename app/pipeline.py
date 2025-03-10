@@ -102,8 +102,12 @@ def process_image_mediapipe(image_file, second):
         image_np = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
 
+        app.logger.info(f"Image read")
+
         # Convert to RGB (Mediapipe requires RGB format)
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        app.logger.info(f"Image RGB converted")
 
         # Run face detection
         results = face_detection.process(img_rgb)
