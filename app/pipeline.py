@@ -109,6 +109,8 @@ def process_image_mediapipe(image_file, second):
         results = face_detection.process(img_rgb)
         # faces = []
 
+        app.logger.info(f"Face detection done!!")
+
         if results.detections:
             for i, detection in enumerate(results.detections):
                 bbox = detection.location_data.relative_bounding_box
@@ -173,7 +175,7 @@ def process_image_mediapipe(image_file, second):
         # return faces
 
     except Exception as e:
-        print(f"❌ Error processing image: {str(e)}")
+        app.logger.error(f"❌ Error processing image: {str(e)}")
         return None
 
     # pass
