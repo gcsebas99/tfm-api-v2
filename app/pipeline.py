@@ -13,8 +13,11 @@ import numpy as np
 import mediapipe as mp
 
 from memory_profiler import profile
+import psutil
 
-
+def get_memory_usage():
+    process = psutil.Process(os.getpid())
+    return process.memory_info().rss / (1024 * 1024)  # Convert to MB
 
 
 # Define a permanent folder to store images
@@ -91,6 +94,9 @@ face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detectio
 # @profile
 def process_image_mediapipe(image_file, second):
     try:
+
+        app.logger.info(f"Memory usage at start of process_image_mediapipe for image{second}: {get_memory_usage()} MB")
+
         # Read image
         image_bytes = image_file.read()
         image_np = np.frombuffer(image_bytes, np.uint8)
@@ -149,9 +155,9 @@ def process_image_mediapipe(image_file, second):
                 result_emotions=process_emotions(face_crop)
 
                 # Save the cropped face
-                face_filename = f"face_mediapipe_{i}_{second}.jpg"
-                face_path = os.path.join(UPLOAD_FOLDER, face_filename)
-                cv2.imwrite(face_path, face_crop)  # Correct method for saving OpenCV images
+                # face_filename = f"face_mediapipe_{i}_{second}.jpg"
+                # face_path = os.path.join(UPLOAD_FOLDER, face_filename)
+                # cv2.imwrite(face_path, face_crop)  # Correct method for saving OpenCV images
 
                 # faces.append({
                 #     "xmin": x_min,
@@ -161,7 +167,8 @@ def process_image_mediapipe(image_file, second):
                 #     "score": detection.score[0]
                 # })
 
-                print(f"✅ Face recognized in second {second}")
+                app.logger.info(f"Memory usage after processing image{second}: {get_memory_usage()} MB")
+                app.logger.info(f"!!! Face recognized in second {second}")
 
         # return faces
 
