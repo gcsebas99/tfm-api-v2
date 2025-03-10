@@ -351,6 +351,7 @@ class RecognitionBatchApi(Resource):
             num_images = request.form.get("num_images")
             images = request.files.getlist("images")
 
+            app.logger.info(f"Memory usage at start: {get_memory_usage()} MB")
             app.logger.info(f"Event value: {event_id}, Number of images: {num_images}")
 
             if event_id is None or num_images is None:
@@ -370,7 +371,9 @@ class RecognitionBatchApi(Resource):
             if not event:
                 return {'error': 'Event not found'}, 404
 
-            print(f"Memory usage before processing: {get_memory_usage()} MB")
+            app.logger.info(f"Validations successful. Processing images...")
+            app.logger.info(f"Memory usage before processing: {get_memory_usage()} MB")
+
             recognitions = []
             age = random.randint(14, 70)
             gender = random.randint(1, 2)
