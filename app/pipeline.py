@@ -89,7 +89,7 @@ def process_image_yolo(image_file, second):
 
 # Initialize Mediapipe Face Detection
 mp_face_detection = mp.solutions.face_detection
-face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
+# face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
 
 # @profile
 def process_image_mediapipe(image_file, second):
@@ -112,8 +112,8 @@ def process_image_mediapipe(image_file, second):
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         app.logger.info(f"Memory after converting to RGB: {get_memory_usage()} MB")
 
-        # with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
-        results = face_detection.process(img_rgb)
+        with mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5) as face_detection:
+            results = face_detection.process(img_rgb)
 
         app.logger.info(f"Memory after face detection: {get_memory_usage()} MB")
 
