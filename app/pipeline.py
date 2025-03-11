@@ -89,31 +89,27 @@ def process_image_yolo(image_file, second):
 
 # Initialize Mediapipe Face Detection
 mp_face_detection = mp.solutions.face_detection
-face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
+# face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
 
 # @profile
 def process_image_mediapipe(image_file, second):
     try:
 
-        app.logger.info(f"Memory usage at start of process_image_mediapipe for image{second}: {get_memory_usage()} MB")
+        app.logger.info(f"Memory usage before processing image {second}: {get_memory_usage()} MB")
 
-        # Read image
         image_bytes = image_file.read()
         image_np = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
 
-        app.logger.info(f"Image read")
+        app.logger.info(f"Memory after reading image: {get_memory_usage()} MB")
 
-        # Convert to RGB (Mediapipe requires RGB format)
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        app.logger.info(f"Memory after converting to RGB: {get_memory_usage()} MB")
 
-        app.logger.info(f"Image RGB converted")
+        with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
+            results = face_detection.process(img_rgb)
 
-        # Run face detection
-        results = face_detection.process(img_rgb)
-        # faces = []
-
-        app.logger.info(f"Face detection done!!")
+        app.logger.info(f"Memory after face detection: {get_memory_usage()} MB")
 
         if results.detections:
             for i, detection in enumerate(results.detections):
